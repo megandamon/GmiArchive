@@ -1,0 +1,93 @@
+[Workflow Architecture]
+NAME = GmiArchive
+VERSION = 1.0.0
+CREATOR =
+CREATION_DATE = 
+DESCRIPTION =
+LOGGING_DIRECTORY = log
+OVERALL_STATUS = QUEUED
+
+
+###############################################################################
+#
+# Prepare the station data for GMI station processing
+#
+###############################################################################
+
+
+[Task.Create Directory Structure]
+NAME = Create Directory Structure
+DESCRIPTION = Creates the completed/YYYY/etc. directory structure
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/CreateDirectoryStructure.bash 
+TASK_DEPENDENCY = 
+
+[Task.Move Station Files]
+NAME = Move Station Files
+DESCRIPTION = Moves station files to completed/YYYY/stations
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/MoveStationFiles.bash 
+TASK_DEPENDENCY = Create Directory Structure eq Completed
+
+[Task.Move Diagnostics Files]
+NAME = Move Diagnostics Files
+DESCRIPTION = Moves diagnostic files to completed/YYYY/diagnostics
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/MoveDiagnosticFiles.bash 
+TASK_DEPENDENCY = Move Station Files eq Completed
+
+[Task.Move Netcdf Files]
+NAME = Move Netcdf Files
+DESCRIPTION = Moves remaining Netcdf files to completed/YYYY/
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/MoveNetcdfFiles.bash 
+TASK_DEPENDENCY = Move Diagnostics Files eq Completed
+
+[Task.Move Metdata Files]
+NAME = Move Metdata Files
+DESCRIPTION = Moves metdata files to completed/metdata_files/
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/MoveMetdataFiles.bash 
+TASK_DEPENDENCY = Move Netcdf Files eq Completed
+
+[Task.Move Run Files]
+NAME = Move Run Files
+DESCRIPTION = Moves run files to completed/YYYY/run_info
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/MoveRunFiles.bash 
+TASK_DEPENDENCY = Move Metdata Files eq Completed
+
+[Task.Archive Files]
+NAME = Archive Files
+DESCRIPTION = Archive files to GMI area
+TASK_TYPE = PARENT
+TASK_DEPENDENCY = Move Run Files eq Completed
+
+[Task.Archive Files.Archive Metdata Files]
+NAME = Archive Metdata Files
+DESCRIPTION = Moves metdata files to GMI archive area
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/ArchiveMetdataFiles.bash 
+TASK_DEPENDENCY = Move Run Files eq Completed
+
+[Task.Archive Files.Archive Year Directory]
+NAME = Archive Year Directory
+DESCRIPTION = Moves year directory to GMI archive area
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/ArchiveYearDirectory.bash 
+TASK_DEPENDENCY = Archive Metdata Files eq Completed
+
+[Task.Archive Files.Check Files]
+NAME = Check Files
+DESCRIPTION = Checks files in the GMI archive area
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/CheckFiles.bash 
+TASK_DEPENDENCY = Archive Year Directory eq Completed
+
+[Task.Remove Files From Working Directory]
+NAME = Remove Files From Working Directory
+DESCRIPTION = MANUAL TASK - Run this to remove all files from working directory
+TASK_TYPE = SYSTEM
+EXECUTABLE_OBJECT = $NED_WORKING_DIR/bin/RemoveFiles.bash 
+TASK_DEPENDENCY = MANUAL_TASK
+
